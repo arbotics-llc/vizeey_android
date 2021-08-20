@@ -1,0 +1,213 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/rootExperimentList"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/background"
+    android:paddingLeft="0dp"
+    android:paddingTop="0dp"
+    android:paddingRight="0dp"
+    android:paddingBottom="0dp"
+    tools:context=".ExperimentList">
+
+    <RelativeLayout
+        android:id="@+id/expListHeader"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/background"
+        android:elevation="8dp">
+
+        <ImageView
+            android:id="@+id/logo"
+            android:layout_width="wrap_content"
+            android:layout_height="@dimen/titleIconSize"
+            android:layout_alignParentStart="true"
+            android:layout_alignParentLeft="true"
+            android:layout_alignParentTop="true"
+            android:layout_alignParentEnd="true"
+            android:layout_alignParentRight="true"
+            android:layout_marginLeft="@dimen/activity_horizontal_margin"
+            android:layout_marginTop="@dimen/activity_vertical_margin"
+            android:layout_marginRight="@dimen/activity_horizontal_margin"
+            android:layout_marginBottom="@dimen/activity_vertical_margin"
+            android:background="@color/background"
+            android:padding="5dp"
+            android:scaleType="fitStart"
+            android:src="@drawable/header_logo" />
+
+        <ImageView
+            android:id="@+id/credits"
+            android:layout_width="wrap_content"
+            android:layout_height="@dimen/titleIconSize"
+            android:layout_alignTop="@+id/logo"
+            android:layout_alignParentStart="false"
+            android:layout_alignParentLeft="false"
+            android:layout_alignParentEnd="true"
+            android:layout_alignParentRight="true"
+            android:layout_marginRight="@dimen/activity_horizontal_margin"
+            android:adjustViewBounds="true"
+            android:contentDescription="@string/info"
+            app:srcCompat="@drawable/info" />
+    </RelativeLayout>
+
+    <de.rwth_aachen.vizzey.ReportingScrollView
+        android:id="@+id/experimentScroller"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/expListHeader"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentBottom="true"
+        android:background="@color/background"
+        android:fillViewport="false">
+
+        <LinearLayout
+            android:id="@+id/experimentList"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:clipChildren="true"
+            android:clipToPadding="true"
+            android:orientation="vertical"
+            android:paddingTop="@dimen/activity_vertical_margin"></LinearLayout>
+    </de.rwth_aachen.vizzey.ReportingScrollView>
+
+    <LinearLayout
+        android:id="@+id/rootLoader"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_above="@+id/newExperiment"
+        android:layout_below="@+id/expListHeader"
+        android:orientation="vertical">
+
+        <ImageView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:src="@drawable/loader" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="40dp"
+            android:gravity="center"
+            android:text="Begin your exploration here!"
+            android:textColor="@color/presetWhite" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="40dp"
+            android:gravity="center"
+            android:textStyle="bold"
+            android:linksClickable="true"
+            android:text="@string/experimentsPhyphoxOrgURL"
+            android:textColor="@color/presetWhite" />
+    </LinearLayout>
+
+    <View
+        android:id="@+id/experimentListDimmer"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@color/background"
+        android:visibility="invisible" />
+
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/newExperimentQR"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_above="@id/newExperimentBluetooth"
+        android:layout_alignRight="@id/newExperiment"
+        android:layout_marginRight="9dp"
+        android:layout_marginBottom="-18dp"
+        android:clickable="false"
+        android:contentDescription="@string/newExperimentQR"
+        android:elevation="12dp"
+        android:text="@string/newExperimentQR"
+        android:visibility="invisible"
+        app:backgroundTint="@color/qrFabBG"
+        app:fabSize="mini"
+        app:srcCompat="@drawable/new_experiment_qr"
+        app:useCompatPadding="true" />
+
+    <TextView
+        android:id="@+id/newExperimentQRLabel"
+        android:layout_width="wrap_content"
+        android:layout_height="72dp"
+        android:layout_alignTop="@id/newExperimentQR"
+        android:layout_toLeftOf="@id/newExperimentQR"
+        android:gravity="center"
+        android:text="@string/newExperimentQR"
+        android:visibility="invisible" />
+
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/newExperimentBluetooth"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_above="@id/newExperimentSimple"
+        android:layout_alignRight="@id/newExperiment"
+        android:layout_marginRight="9dp"
+        android:layout_marginBottom="-18dp"
+        android:clickable="false"
+        android:contentDescription="@string/newExperimentBluetooth"
+        android:elevation="12dp"
+        android:text="@string/newExperimentBluetooth"
+        android:visibility="gone"
+        app:backgroundTint="@color/bluetooth"
+        app:fabSize="mini"
+        app:srcCompat="@drawable/new_experiment_bluetooth"
+        app:useCompatPadding="true" />
+
+    <TextView
+        android:id="@+id/newExperimentBluetoothLabel"
+        android:layout_width="wrap_content"
+        android:layout_height="72dp"
+        android:layout_alignTop="@id/newExperimentBluetooth"
+        android:layout_toLeftOf="@id/newExperimentBluetooth"
+        android:gravity="center"
+        android:text="@string/newExperimentBluetooth"
+        android:visibility="gone" />
+
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/newExperimentSimple"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_above="@id/newExperiment"
+        android:layout_alignRight="@id/newExperiment"
+        android:layout_marginRight="9dp"
+        android:layout_marginBottom="-18dp"
+        android:clickable="false"
+        android:contentDescription="@string/newExperimentSimple"
+        android:elevation="12dp"
+        android:text="@string/newExperimentSimple"
+        android:visibility="invisible"
+        app:backgroundTint="@color/newExperimentFabBG"
+        app:fabSize="mini"
+        app:srcCompat="@drawable/new_experiment_simple"
+        app:useCompatPadding="true" />
+
+    <TextView
+        android:id="@+id/newExperimentSimpleLabel"
+        android:layout_width="wrap_content"
+        android:layout_height="72dp"
+        android:layout_alignTop="@id/newExperimentSimple"
+        android:layout_toLeftOf="@id/newExperimentSimple"
+        android:gravity="center"
+        android:text="@string/newExperimentSimple"
+        android:visibility="invisible" />
+
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/newExperiment"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentBottom="true"
+        android:contentDescription="@string/newExperiment"
+        android:elevation="12dp"
+        android:text="@string/newExperiment"
+        app:backgroundTint="@color/sky_blue"
+        app:fabSize="normal"
+        app:srcCompat="@drawable/new_experiment"
+        app:useCompatPadding="true" />
+
+</RelativeLayout>
