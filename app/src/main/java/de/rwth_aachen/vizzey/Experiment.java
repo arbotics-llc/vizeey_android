@@ -1144,7 +1144,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
                                 return;
                             }
 
-                            final Uri uri = FileProvider.getUriForFile(getBaseContext(), getPackageName() + ".exportProvider", file);
+                            final Uri uri = FileProvider.getUriForFile(getBaseContext(), BuildConfig.APPLICATION_ID +".fileprovider", file);
                             final Intent intent = ShareCompat.IntentBuilder.from(Experiment.this)
                                     .setType("application/octet-stream") //mime type from the export filter
                                     .setSubject(getString(R.string.save_state_subject))
@@ -1236,7 +1236,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
                 out.close();
                 bitmap.recycle();
 
-                final Uri uri = FileProvider.getUriForFile(this, getPackageName() + ".exportProvider", file);
+                final Uri uri = FileProvider.getUriForFile(this, BuildConfig.APPLICATION_ID + ".fileprovider", file);
 
                 final Intent intent = ShareCompat.IntentBuilder.from(this)
                         .setType("image/png")

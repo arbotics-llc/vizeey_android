@@ -484,7 +484,7 @@ public class DataExport implements Serializable {
                         File exportFile = exportFormats[selected.value].export(chosenSets, c.getCacheDir(), minimalistic, c);
 
                         //Use a FileProvider so we can send this file to other apps
-                        final Uri uri = FileProvider.getUriForFile(c, c.getPackageName() + ".exportProvider", exportFile);
+                        final Uri uri = FileProvider.getUriForFile(c, BuildConfig.APPLICATION_ID +".fileprovider", exportFile);
 
                         //Create a share intent
                         final Intent intent = ShareCompat.IntentBuilder.from(c)

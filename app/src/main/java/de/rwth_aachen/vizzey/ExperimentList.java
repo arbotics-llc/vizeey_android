@@ -129,7 +129,7 @@ public class ExperimentList extends AppCompatActivity {
     public final static String EXPERIMENT_ISASSET = "com.dicon.phyphox.EXPERIMENT_ISASSET";
     public final static String EXPERIMENT_UNAVAILABLESENSOR = "com.dicon.phyphox.EXPERIMENT_UNAVAILABLESENSOR";
     public final static String EXPERIMENT_PRESELECTED_BLUETOOTH_ADDRESS = "com.dicon.phyphox.EXPERIMENT_PRESELECTED_BLUETOOTH_ADDRESS";
-
+    private static final String TAG = "ExperimentList";
     //String constant to identify our preferences
     public static final String PREFS_NAME = "phyphox";
 
@@ -438,8 +438,10 @@ public class ExperimentList extends AppCompatActivity {
                 holder.menuBtn.setVisibility(ImageView.GONE); //Asset - no menu button
             else {
                 //No asset. Menu button visible and it needs an onClickListener
+                Log.e(TAG, "@getView1---> " );
                 holder.menuBtn.setVisibility(ImageView.VISIBLE);
                 if (Helper.luminance(colors.get(position)) > 0.1)
+                    Log.e(TAG, "@getViewiff---> " );
                     holder.menuBtn.setColorFilter(colors.get(position), android.graphics.PorterDuff.Mode.SRC_IN);
                 holder.menuBtn.setOnClickListener(new View.OnClickListener() {
                     @Override
@@ -456,7 +458,7 @@ public class ExperimentList extends AppCompatActivity {
                                     case R.id.experiment_item_share: {
                                         File file = new File(getFilesDir(), "/" + xmlFiles.get(position));
 
-                                        final Uri uri = FileProvider.getUriForFile(getBaseContext(), getPackageName() + ".exportProvider", file);
+                                        final Uri uri = FileProvider.getUriForFile(getBaseContext(), BuildConfig.APPLICATION_ID +".fileprovider", file);
                                         final Intent intent = ShareCompat.IntentBuilder.from(parentActivity)
                                                 .setType("application/octet-stream") //mime type from the export filter
                                                 .setSubject(getString(R.string.save_state_subject))
