@@ -1,6 +1,5 @@
-# phyphox: Android
-
-Phyphox is an app that uses the sensors in a smartphone for physics experiments. You can find additional details and examples on https://phyphox.org.
+# Vizeey: Android
+Vizeey is an app that uses the sensors in a smartphone for physics experiments and is based on Phyphox, an open source project. Changes to the open source base of Phyphox include a customized branding scheme and the removal of default Phyphox experiments.  Otherwise, the application is identical in function to the original Phyphox.   You can find additional details and examples of Phyphox at https://phyphox.org.
 
 Copyright 2016 Dr. Sebastian Staacks, 2nd Institute of Physics, RWTH Aachen University.
 
