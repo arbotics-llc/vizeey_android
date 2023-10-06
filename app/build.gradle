@@ -1,13 +1,17 @@
 apply plugin: 'com.android.application'
 
 android {
-    compileSdkVersion 30
-    buildToolsVersion "30.0.3"
+//    compileSdkVersion 30
+    compileSdkVersion 33
+//    buildToolsVersion "30.0.3"
 
     defaultConfig {
         applicationId "de.rwth_aachen.vizeey"
-        minSdkVersion 19
-        targetSdkVersion 30
+//        minSdkVersion 19
+        minSdkVersion 21
+//        targetSdkVersion 30
+        minSdkVersion 21
+        targetSdkVersion 33
 
         versionName "1.0"
         //  format  WXXYYZZ, where WW is major, XX is minor, YY is patch, and ZZ is build
