@@ -10,12 +10,11 @@ android {
 //        minSdkVersion 19
         minSdkVersion 21
 //        targetSdkVersion 30
-        minSdkVersion 21
         targetSdkVersion 33
 
         versionName "1.0"
         //  format  WXXYYZZ, where WW is major, XX is minor, YY is patch, and ZZ is build
-        versionCode 1 //1.01.09-00
+        versionCode 2 // 12-Oct-2023
 
         resConfigs "en", "cs", "de", "el", "es", "fr", "it", "ja", "nl", "pl", "pt", "ru", "sr", "b+sr+Latn", "tr", "vi", "zh-rCN", "zh-rTW"
         vectorDrawables {

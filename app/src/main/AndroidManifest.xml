@@ -23,9 +23,14 @@
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
+        android:largeHeap="true"
+        android:requestLegacyExternalStorage="true"
         android:theme="@style/phyphox"
-        android:usesCleartextTraffic="true"><!-- While not recommended, there are plenty of use cases for phyphox on local networks where unencrypted communication is not unreasonable. -->
-        <activity android:name="de.rwth_aachen.vizzey.splash.SplashActivity">
+        android:usesCleartextTraffic="true"
+        tools:replace="android:allowBackup"><!-- While not recommended, there are plenty of use cases for phyphox on local networks where unencrypted communication is not unreasonable. -->
+        <activity
+            android:name="de.rwth_aachen.vizzey.splash.SplashActivity"
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
@@ -34,6 +39,7 @@
         <activity
             android:name="de.rwth_aachen.vizzey.ExperimentList"
             android:configChanges="keyboardHidden|orientation|screenSize"
+            android:exported="true"
             android:label="@string/app_name"
             android:theme="@style/splashTheme">
             <intent-filter>
@@ -91,6 +97,7 @@
         <activity
             android:name="de.rwth_aachen.vizzey.Experiment"
             android:configChanges="keyboardHidden|orientation|screenSize"
+            android:exported="true"
             android:label="@string/title_activity_experiment"
             android:parentActivityName="de.rwth_aachen.vizzey.ExperimentList"
             android:theme="@style/phyphox">
@@ -100,6 +107,7 @@
         </activity>
         <activity
             android:name="com.journeyapps.barcodescanner.CaptureActivity"
+            android:exported="true"
             android:screenOrientation="unspecified"
             tools:replace="screenOrientation" />
 
@@ -117,7 +125,9 @@
                 android:resource="@xml/export_provider" />
 
         </provider>
-        <service android:name="org.eclipse.paho.android.service.MqttService"></service>
+        <service
+            android:name="org.eclipse.paho.android.service.MqttService"
+            android:exported="true" />
     </application>
     <queries>
         <!-- Opening web links -->
