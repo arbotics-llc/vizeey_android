@@ -36,6 +36,8 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
+import android.provider.Settings;
 import android.text.Html;
 import android.text.SpannableStringBuilder;
 import android.text.Spanned;
@@ -67,6 +69,10 @@ import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.activity.result.ActivityResult;
+import androidx.activity.result.ActivityResultCallback;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AlertDialog;
@@ -116,7 +122,9 @@ import de.rwth_aachen.vizzey.Bluetooth.Bluetooth;
 import de.rwth_aachen.vizzey.Bluetooth.BluetoothInput;
 import de.rwth_aachen.vizzey.Bluetooth.BluetoothScanDialog;
 
+import static android.Manifest.permission.READ_EXTERNAL_STORAGE;
 import static android.bluetooth.BluetoothGattCharacteristic.FORMAT_UINT8;
+import static android.os.Build.VERSION.SDK_INT;
 
 //ExperimentList implements the activity which lists all experiments to the user. This is the start
 //activity for this app if it is launched without an intent.
@@ -174,7 +182,7 @@ public class ExperimentList extends AppCompatActivity {
 
         popupWindow = new PopupWindow(hintView, ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
 
-        if (Build.VERSION.SDK_INT >= 21) {
+        if (SDK_INT >= 21) {
             popupWindow.setElevation(4.0f);
         }
 
@@ -303,7 +311,7 @@ public class ExperimentList extends AppCompatActivity {
             intent.setAction(Intent.ACTION_VIEW);
 
             //If we are on a recent API, we can add a nice zoom animation
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
+            if (SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
                 ActivityOptions options = ActivityOptions.makeScaleUpAnimation(v, 0,
                         0, v.getWidth(), v.getHeight());
                 v.getContext().startActivity(intent, options.toBundle());
@@ -357,6 +365,7 @@ public class ExperimentList extends AppCompatActivity {
                 convertView.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
+
                         if (isLinkList.get(position) != null) {
                             try {
                                 Uri uri = Uri.parse(isLinkList.get(position));
@@ -671,7 +680,7 @@ public class ExperimentList extends AppCompatActivity {
             experiments = new ExperimentItemAdapter(parentActivity, name);
             experimentSubList.setAdapter(experiments);
 
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            if (SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
                 catLayout.setElevation(res.getDimensionPixelOffset(R.dimen.expElementElevation));
                 catLayout.setClipToPadding(false);
                 catLayout.setClipChildren(false);
@@ -958,7 +967,7 @@ public class ExperimentList extends AppCompatActivity {
                                         bluetoothDeviceUUIDList.get(uuid).add(experimentXML);
                                     }
                                 }
-                                if (Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN_MR2) {
+                                if (SDK_INT < Build.VERSION_CODES.JELLY_BEAN_MR2) {
                                     unavailableSensor = R.string.bluetooth;
                                 } else if (!Bluetooth.isSupported(this)) {
                                     unavailableSensor = R.string.bluetooth;
@@ -1145,11 +1154,15 @@ public class ExperimentList extends AppCompatActivity {
             try {
                 //Prepare temporary directory
                 File tempPath = new File(parent.get().getFilesDir(), "temp");
+
+                Log.e("TAG", "tempPath..........."+tempPath);
+                Log.e("TAG", "tempPath.exists()..........."+tempPath.exists());
                 if (!tempPath.exists()) {
                     if (!tempPath.mkdirs())
                         return "Could not create temporary directory to store temporary file.";
                 }
                 String[] files = tempPath.list();
+                Log.e("TAG", "tfiles.length........."+files.length);
                 for (String file : files) {
                     if (!(new File(tempPath, file).delete()))
                         return "Could not clear temporary directory for temporary file.";
@@ -1226,9 +1239,11 @@ public class ExperimentList extends AppCompatActivity {
             this.preselectedDevice = preselectedDevice;
         }
 
-        //Copying is done on a second thread...
+
         protected String doInBackground(String... params) {
             PhyphoxFile.PhyphoxStream phyphoxStream = PhyphoxFile.openXMLInputStream(intent, parent.get());
+            Log.e(TAG, "phyphoxStream.errorMessage:........"+phyphoxStream.errorMessage);
+
             if (!phyphoxStream.errorMessage.isEmpty()) {
                 return phyphoxStream.errorMessage;
             }
@@ -1237,25 +1252,36 @@ public class ExperimentList extends AppCompatActivity {
             try {
                 //Prepare temporary directory
                 File tempPath = new File(parent.get().getFilesDir(), "temp_zip");
+                Log.e(TAG, "tempPath.exists()........"+tempPath.exists());
+
                 if (!tempPath.exists()) {
                     if (!tempPath.mkdirs())
                         return "Could not create temporary directory to extract zip file.";
                 }
                 String[] files = tempPath.list();
                 for (String file : files) {
+                    // for file not delete in android 10 and 10+
+
                     if (!(new File(tempPath, file).delete()))
                         return "Could not clear temporary directory to extract zip file.";
                 }
+                Log.e(TAG, "phyphoxStream.inputStream......."+phyphoxStream.inputStream);
 
                 ZipInputStream zis = new ZipInputStream(phyphoxStream.inputStream);
 
-                ZipEntry entry;
+                ZipEntry entry =zis.getNextEntry();
                 byte[] buffer = new byte[2048];
-                while ((entry = zis.getNextEntry()) != null) {
-                    File f = new File(tempPath, entry.getName());
+//                Log.e(TAG, "doInBackground: getNextEntry    "+zis.getNextEntry());
+//                while ((entry = zis.getNextEntry()) != null) {
+                if (!entry.toString().endsWith(".zip")) {
+
+
+                File f = new File(tempPath, entry.getName());
+
                     String canonicalPath = f.getCanonicalPath();
                     if (!canonicalPath.startsWith(tempPath.getCanonicalPath())) {
-                        return "Security exception: The zip file appears to be tempered with to perform a path traversal attack. Please contact the source of your experiment package or contact the phyphox team for details and help on this issue.";
+                        return "Security exception: The zip file appears to be tempered with to perform a path traversal attack. " +
+                                "Please contact the source of your experiment package or contact the phyphox team for details and help on this issue.";
                     }
                     FileOutputStream out = new FileOutputStream(f);
                     int size = 0;
@@ -1263,7 +1289,25 @@ public class ExperimentList extends AppCompatActivity {
                         out.write(buffer, 0, size);
                     }
                     out.close();
+//                }
+                }else {
+                    while ((entry = zis.getNextEntry()) != null) {
+                        File f = new File(tempPath, entry.getName());
+
+                        String canonicalPath = f.getCanonicalPath();
+                        if (!canonicalPath.startsWith(tempPath.getCanonicalPath())) {
+                            return "Security exception: The zip file appears to be tempered with to perform a path traversal attack. " +
+                                    "Please contact the source of your experiment package or contact the phyphox team for details and help on this issue.";
+                        }
+                        FileOutputStream out = new FileOutputStream(f);
+                        int size = 0;
+                        while ((size = zis.read(buffer)) > 0) {
+                            out.write(buffer, 0, size);
+                        }
+                        out.close();
+                    }
                 }
+
                 zis.close();
             } catch (Exception e) {
                 return "Error loading zip file: " + e.getMessage();
@@ -1279,6 +1323,7 @@ public class ExperimentList extends AppCompatActivity {
         }
     }
 
+
     public void zipReady(String result, BluetoothDevice preselectedDevice) {
         if (progress != null)
             progress.dismiss();
@@ -1291,7 +1336,7 @@ public class ExperimentList extends AppCompatActivity {
                 }
             });
             if (files.length == 0) {
-                Toast.makeText(this, "Error: There is no valid phyphox experiment in this zip file.", Toast.LENGTH_LONG).show();
+                Toast.makeText(this, "Error: alid phyphox experiment in this zip file.", Toast.LENGTH_LONG).show();
             } else if (files.length == 1) {
                 //Create an intent for this file
                 Intent intent = new Intent(this, Experiment.class);
@@ -1344,7 +1389,8 @@ public class ExperimentList extends AppCompatActivity {
                     //Load details for each experiment
                     try {
                         InputStream input = new FileInputStream(file);
-                        loadExperimentInfo(input, file.getName(), "temp_zip", false, zipExperiments, null, null);
+                        loadExperimentInfo(input, file.getName(), "temp_zip",
+                                false, zipExperiments, null, null);
                         input.close();
                     } catch (IOException e) {
                         Log.e("zip", e.getMessage());
@@ -1378,7 +1424,7 @@ public class ExperimentList extends AppCompatActivity {
 
         //Copying is done on a second thread...
         protected BluetoothScanDialog.BluetoothDeviceInfo doInBackground(String... params) {
-            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN_MR2 || !Bluetooth.isSupported(parent.get())) {
+            if (SDK_INT < Build.VERSION_CODES.JELLY_BEAN_MR2 || !Bluetooth.isSupported(parent.get())) {
                 showBluetoothScanError(getResources().getString(R.string.bt_android_version), true, true);
                 return null;
             } else {
@@ -1395,7 +1441,7 @@ public class ExperimentList extends AppCompatActivity {
         @Override
         //Call the parent callback when we are done.
         protected void onPostExecute(BluetoothScanDialog.BluetoothDeviceInfo result) {
-            if (result != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2)
+            if (result != null && SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2)
                 openBluetoothExperiments(result.device, result.uuids, result.phyphoxService);
         }
     }
@@ -1797,9 +1843,62 @@ public class ExperimentList extends AppCompatActivity {
 
         dialog.show();
     }
+    ActivityResultLauncher<Intent> requestBluetooth = registerForActivityResult(
+            new ActivityResultContracts.StartActivityForResult(),
+            result -> {
+                Log.e("123456", "-------*******---------Granted result.getResultCode()"+result.getResultCode());
+
+                if (result.getResultCode() == Activity.RESULT_OK) {
+                    Log.e("123456", "-------*******---------Granted");
+                    // Granted
+                } else {
+                    Log.e("123456", "----------------Denied");
+
+                    // Denied
+                }
+            }
+    );
+
+    ActivityResultLauncher<String[]> requestMultiplePermissions = registerForActivityResult(
+            new ActivityResultContracts.RequestMultiplePermissions(),
+            permissions -> {
+                for (Map.Entry<String, Boolean> entry : permissions.entrySet()) {
+                    String key = entry.getKey();
+                    Boolean value = entry.getValue();
+                    Log.e("test006", key + " = " + value);
+                }
+            }
+    );
+
+    ActivityResultLauncher<Intent> resultLauncher = registerForActivityResult(
+            new ActivityResultContracts.StartActivityForResult(),
+            new ActivityResultCallback<ActivityResult>() {
+                @Override
+                public void onActivityResult(ActivityResult result) {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+
+                    }
+                }
+            }
+    );
+
 
 
     protected void handleIntent(Intent intent) {
+
+        if (SDK_INT >= Build.VERSION_CODES.S) {
+            String[] permissions = {
+                    Manifest.permission.BLUETOOTH_SCAN,
+                    Manifest.permission.BLUETOOTH_CONNECT
+            };
+            requestMultiplePermissions.launch(permissions);
+        } else {
+            Log.e("123456", "-------*******---------Granted");
+
+            Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
+            requestBluetooth.launch(enableBtIntent);
+        }
+
 
 
         if (progress != null)
@@ -1810,13 +1909,20 @@ public class ExperimentList extends AppCompatActivity {
             return;
         boolean isZip = false;
         if (scheme.equals(ContentResolver.SCHEME_FILE)) {
-            if (scheme.equals(ContentResolver.SCHEME_FILE) && !intent.getData().getPath().startsWith(getFilesDir().getPath()) && ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+
+
+            if (scheme.equals(ContentResolver.SCHEME_FILE) && !intent.getData().getPath().startsWith(getFilesDir().getPath())
+                    && ContextCompat.checkSelfPermission(this, READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
                 //Android 6.0: No permission? Request it!
-                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, 0);
+                ActivityCompat.requestPermissions(this, new String[]{READ_EXTERNAL_STORAGE}, 0);
                 //We will stop here. If the user grants the permission, the permission callback will restart the action with the same intent
                 return;
             }
+
+
             Uri uri = intent.getData();
+
+            Log.e("123456", uri+"");
 
             byte[] data = new byte[4];
             InputStream is;
@@ -1836,16 +1942,25 @@ public class ExperimentList extends AppCompatActivity {
 
             isZip = (data[0] == 0x50 && data[1] == 0x4b && data[2] == 0x03 && data[3] == 0x04);
 
-            if (!isZip) {
-                //This is just a single experiment - Start the Experiment activity and let it handle the intent
-                Intent forwardedIntent = new Intent(intent);
-                forwardedIntent.setClass(this, Experiment.class);
-                this.startActivity(forwardedIntent);
-            } else {
-                //We got a zip-file. Let's see what's inside...
+
+            // for android version
+            if (SDK_INT >= Build.VERSION_CODES.Q) {
                 progress = ProgressDialog.show(this, res.getString(R.string.loadingTitle), res.getString(R.string.loadingText), true);
                 new handleZipIntent(intent, this).execute();
+            }else {
+
+                if (!isZip) {
+                    //This is just a single experiment - Start the Experiment activity and let it handle the intent
+                    Intent forwardedIntent = new Intent(intent);
+                    forwardedIntent.setClass(this, Experiment.class);
+                    this.startActivity(forwardedIntent);
+                } else {
+                    //We got a zip-file. Let's see what's inside...
+                    progress = ProgressDialog.show(this, res.getString(R.string.loadingTitle), res.getString(R.string.loadingText), true);
+                    new handleZipIntent(intent, this).execute();
+                }
             }
+
         } else if (scheme.equals(ContentResolver.SCHEME_CONTENT) || scheme.equals("phyphox") || scheme.equals("http") || scheme.equals("https")) {
             progress = ProgressDialog.show(this, res.getString(R.string.loadingTitle), res.getString(R.string.loadingText), true);
             new handleCopyIntent(intent, this).execute();
@@ -2124,12 +2239,17 @@ public class ExperimentList extends AppCompatActivity {
         super.onActivityResult(requestCode, resultCode, intent);
         IntentResult scanResult = IntentIntegrator.parseActivityResult(requestCode, resultCode, intent);
         String textResult;
+
         if (scanResult != null && (textResult = scanResult.getContents()) != null) {
-            if (textResult.toLowerCase().startsWith("http://") || textResult.toLowerCase().startsWith("https://") || textResult.toLowerCase().startsWith("phyphox://")) {
+            if (textResult.toLowerCase().startsWith("http://") || textResult.toLowerCase().startsWith("https://") ||
+                    textResult.toLowerCase().startsWith("phyphox://")) {
                 //This is an URL, open it
                 //Create an intent for this new file
+
                 Intent URLintent = new Intent(this, Experiment.class);
                 URLintent.setData(Uri.parse("phyphox://" + textResult.split("//", 2)[1]));
+
+
                 URLintent.setAction(Intent.ACTION_VIEW);
                 handleIntent(URLintent);
 
@@ -2386,7 +2506,7 @@ public class ExperimentList extends AppCompatActivity {
                                 for (int i = 0; i < pInfo.requestedPermissions.length; i++) {
                                     sb.append(pInfo.requestedPermissions[i].startsWith("android.permission.") ? pInfo.requestedPermissions[i].substring(19) : pInfo.requestedPermissions[i]);
                                     sb.append(": ");
-                                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN)
+                                    if (SDK_INT >= Build.VERSION_CODES.JELLY_BEAN)
                                         sb.append((pInfo.requestedPermissionsFlags[i] & PackageInfo.REQUESTED_PERMISSION_GRANTED) == 0 ? "no" : "yes");
                                     else
                                         sb.append("API < 16");
@@ -2414,7 +2534,7 @@ public class ExperimentList extends AppCompatActivity {
                             sb.append(Build.MANUFACTURER);
                             sb.append("<br />");
                             sb.append("ABIS: ");
-                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                            if (SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
                                 for (int i = 0; i < Build.SUPPORTED_ABIS.length; i++) {
                                     if (i > 0)
                                         sb.append(", ");
@@ -2425,7 +2545,7 @@ public class ExperimentList extends AppCompatActivity {
                             }
                             sb.append("<br />");
                             sb.append("Base OS: ");
-                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                            if (SDK_INT >= Build.VERSION_CODES.M) {
                                 sb.append(Build.VERSION.BASE_OS);
                             } else {
                                 sb.append("API < 23");
@@ -2438,7 +2558,7 @@ public class ExperimentList extends AppCompatActivity {
                             sb.append(Build.VERSION.RELEASE);
                             sb.append("<br />");
                             sb.append("Patch: ");
-                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                            if (SDK_INT >= Build.VERSION_CODES.M) {
                                 sb.append(Build.VERSION.SECURITY_PATCH);
                             } else {
                                 sb.append("API < 23");
@@ -2475,7 +2595,7 @@ public class ExperimentList extends AppCompatActivity {
                                     sb.append(" µs");
                                     sb.append("<br />");
                                     sb.append("- Max delay: ");
-                                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                                    if (SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
                                         sb.append(sensor.getMaxDelay());
                                     } else {
                                         sb.append("API < 21");
@@ -2588,7 +2708,36 @@ public class ExperimentList extends AppCompatActivity {
         newExperimentQR.setOnClickListener(neoclQR);
         newExperimentQRLabel.setOnClickListener(neoclQR);
 
+
+
+//        if (SDK_INT >= Build.VERSION_CODES.R) {
+//            if (Environment.isExternalStorageManager()) {
+//
+//            } else {
+//                //request for the permission
+//                Intent intent = new Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION);
+//                Uri uri = Uri.fromParts("package", getPackageName(), null);
+//                intent.setData(uri);
+//                startActivity(intent);
+//            }
+//        }else {
+//            int readPermission = ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE);
+//            int writePermission = ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE);
+//
+//            if (readPermission == PackageManager.PERMISSION_GRANTED && writePermission == PackageManager.PERMISSION_GRANTED) {
+//                // You have the permissions; you can perform read and write operations.
+//            } else {
+//                // Request permissions
+//                String[] permissions = {Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE};
+//                ActivityCompat.requestPermissions(this, permissions, 100);
+//            }
+//
+//        }
+
         handleIntent(getIntent());
+
+
+
 
     }
 
@@ -2969,3 +3118,60 @@ public class ExperimentList extends AppCompatActivity {
     }
 
 }
+//Copying is done on a second thread...
+//        protected String doInBackground(String... params) {
+//            PhyphoxFile.PhyphoxStream phyphoxStream = PhyphoxFile.openXMLInputStream(intent, parent.get());
+//            Log.e(TAG, "phyphoxStream.errorMessage:........"+phyphoxStream.errorMessage);
+//
+//            if (!phyphoxStream.errorMessage.isEmpty()) {
+//                return phyphoxStream.errorMessage;
+//            }
+//
+//            //Copy the input stream to a random file name
+//            try {
+//                //Prepare temporary directory
+//                File tempPath = new File(parent.get().getFilesDir(), "temp_zip");
+//                Log.e(TAG, "tempPath.exists()........"+tempPath.exists());
+//
+//                if (!tempPath.exists()) {
+//                    if (!tempPath.mkdirs())
+//                        return "Could not create temporary directory to extract zip file.";
+//                }
+//                String[] files = tempPath.list();
+//                for (String file : files) {
+//                    // for file not delete in android 10 and 10+
+//
+//                    if (!(new File(tempPath, file).delete()))
+//                        return "Could not clear temporary directory to extract zip file.";
+//                }
+//                Log.e(TAG, "phyphoxStream.inputStream......."+phyphoxStream.inputStream);
+//
+//                ZipInputStream zis = new ZipInputStream(phyphoxStream.inputStream);
+//
+//                ZipEntry entry =zis.getNextEntry();
+//                byte[] buffer = new byte[2048];
+//
+////                while ((entry = zis.getNextEntry()) != null) {
+//                    File f = new File(tempPath, entry.getName());
+//                Log.e(TAG, "doInBackground:........"+f.exists()+"    "+f.length());
+//
+//                String canonicalPath = f.getCanonicalPath();
+//                    if (!canonicalPath.startsWith(tempPath.getCanonicalPath())) {
+//                        return "Security exception: The zip file appears to be tempered with to perform a path traversal attack. " +
+//                                "Please contact the source of your experiment package or contact the phyphox team for details and help on this issue.";
+//                    }
+//                    FileOutputStream out = new FileOutputStream(f);
+//                    int size = 0;
+//                    while ((size = zis.read(buffer)) > 0) {
+//                        out.write(buffer, 0, size);
+//                    }
+//                    out.close();
+////                }
+//
+//                zis.close();
+//            } catch (Exception e) {
+//                return "Error loading zip file: " + e.getMessage();
+//            }
+//
+//            return "";
+//        }

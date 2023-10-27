@@ -263,7 +263,14 @@ public class SensorInput implements SensorEventListener, Serializable {
         this.avgAccuracy = 0.;
         this.aquisitions = 0;
 
-        this.sensorManager.registerListener(this, sensor, SensorManager.SENSOR_DELAY_FASTEST);
+        // for android version 11 above
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.R){
+            this.sensorManager.registerListener(this, sensor, 50000);
+        }else {
+            this.sensorManager.registerListener(this, sensor, SensorManager.SENSOR_DELAY_FASTEST);
+        }
+
+
     }
 
     //Stop the data aquisition by unregistering the listener for this sensor

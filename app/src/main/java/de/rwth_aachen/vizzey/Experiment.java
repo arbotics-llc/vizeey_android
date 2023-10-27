@@ -235,6 +235,8 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
             experiment = app.experiment;
             //experiment = (phyphoxExperiment) savedInstanceState.getSerializable(STATE_EXPERIMENT);
         };
+
+
         if (experiment != null) {
             //We saved our experiment. Lets just retrieve it and continue
             onExperimentLoaded(experiment);
@@ -556,6 +558,9 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
     // if startMeasurement is true the measurement will be started automatically once all devices are connected
     public void connectBluetoothDevices(boolean startMeasurement, final boolean timed) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
+
+            Log.e("123456", "fffffffffffffff");
+            // for - if remove condition - second time connect device.
             if (!(experiment.bluetoothInputs.isEmpty() && experiment.bluetoothOutputs.isEmpty())) {
                 // connect all bluetooth devices with an asyncTask
                 final Bluetooth.ConnectBluetoothTask btTask = new Bluetooth.ConnectBluetoothTask();
@@ -566,6 +571,8 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
                     btTask.onSuccess = new Runnable () {
                       @Override
                         public void run () {
+                          Log.e("123456", "-------*******---------onSuccess"+timed);
+
                           if (timed) {
                               startTimedMeasurement();
                           } else {
@@ -735,6 +742,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         MenuItem timed_play = menu.findItem(R.id.action_timed_play);
         MenuItem timed_pause = menu.findItem(R.id.action_timed_pause);
         MenuItem play = menu.findItem(R.id.action_play);
+        Log.e("123456", "playplayplayplayplayplay" );
         MenuItem pause = menu.findItem(R.id.action_pause);
         MenuItem timer = menu.findItem(R.id.timer);
         MenuItem timed_run = menu.findItem(R.id.action_timedRun);
@@ -783,10 +791,13 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
                 hidePlayHintAnimation();
             }
             startMenuItem = menu.findItem(R.id.action_play);
+            Log.e("123456", "showshowshowshowshowshowshowshow" );
+
             showPlayHintAnimation();
             startMenuItem.getActionView().setOnClickListener(this);
         } else { //Either we cannot show the anymation or we should not show it as the start button has already been used. Hide the animation
             startMenuItem = menu.findItem(R.id.action_play);
+            Log.e("123456", " hide hide hide hide hide hide" );
             hidePlayHintAnimation();
         }
 
@@ -803,6 +814,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         //The calibrated magnetometer entry is only shown if the experiment uses a magnetometer and if the API level is high enough to offer an uncalibrated alternative
         boolean magnetometer = false;
         boolean calibrated = false;
+        Log.e("123456", "xperiment.inputSensors"+ experiment.inputSensors.size() );
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2 && sensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD_UNCALIBRATED) != null) {
             for (SensorInput sensor : experiment.inputSensors) {
                 if (sensor.type == Sensor.TYPE_MAGNETIC_FIELD || sensor.type == Sensor.TYPE_MAGNETIC_FIELD_UNCALIBRATED) {
@@ -824,6 +836,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         forceGNSSItem.setChecked(forceGNSS);
 
         //If the timedRun is active, we have to set the value of the countdown
+        Log.e("123456", "timedRun  timedRun "+ timedRun );
         if (timedRun) {
             if (cdTimer != null) { //Timer running? Show the last known value of millisUntilFinished
                 timer.setTitle(String.format(Locale.US, "%.1f", millisUntilFinished / 1000.0));
@@ -839,9 +852,12 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
 
     @Override
     public void onClick(View v) {
+        Log.e("123456", "onClickonClickonClickonClickonClick" );
         if (popupWindow != null)
             popupWindow.dismiss();
         if (v == hintAnimation) {
+            Log.e("123456", "timedRun  " +timedRun);
+
             if (timedRun) {
                 startTimedMeasurement();
             } else {
@@ -897,14 +913,19 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
 
         //Play button. Start a measurement
         if (id == R.id.action_play) {
+            Log.e("123456", "timedRun");
             SharedPreferences settings = getSharedPreferences(ExperimentList.PREFS_NAME, 0);
             int startHintDismissCount= settings.getInt("startHintDismissCount", 0);
             settings.edit().putInt("startHintDismissCount", startHintDismissCount+1).apply();
 
             if (timedRun) {
+                Log.e("123456", "2222222222222");
+
                 startTimedMeasurement();
             } else
-                startMeasurement();
+                Log.e("123456", "..33333333333333");
+
+            startMeasurement();
             return true;
         }
 
@@ -1534,12 +1555,18 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
     public void startMeasurement() {
         //Disable play-button highlight
         beforeStart = false;
-
+        Log.e("123456", "aaaaaaaaaaaaaa");
         //Start the sensors
         try {
             experiment.startAllIO();
+            Log.e("123456", "bbbbbbbbbbbbbbbb");
+
         } catch (Bluetooth.BluetoothException e) {
+            Log.e("123456", "cccccccccccccc"+ e.getMessage());
+
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
+                Log.e("123456", "ddddddddddddd");
+
                 stopMeasurement(); // stop experiment
                 // show an error dialog
                 Bluetooth.errorDialog.message = e.getMessage();
@@ -1548,6 +1575,8 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
                 Bluetooth.errorDialog.tryAgain = new Runnable() {
                   @Override
                      public void run() {
+                      Log.e("123456", "eeeeeeeeeeeeeeeeeeee");
+
                       connectBluetoothDevices(true, false);
                   }
                  };
@@ -1615,6 +1644,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
     public void startTimedMeasurement() {
         //No more turning off during the measurement
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        Log.e("123456", "444444444444444");
 
 	if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
             // check if all Bluetooth devices are connected and display an errorDialog if not
@@ -1634,6 +1664,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
                 }
             }
             if (notConnectedDevice != null) {
+                Log.e("123456", "55555555555555");
                 // show an error dialog
                 Bluetooth.errorDialog.message = getResources().getString(R.string.bt_exception_no_connection)+Bluetooth.BluetoothException.getMessage(notConnectedDevice);
                 Bluetooth.errorDialog.context = Experiment.this;
@@ -1649,6 +1680,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
             }
         }
 
+        Log.e("123456", "6666666666666666");
         if (timedRunBeepCountdown || timedRunBeepStart || timedRunBeepRunning || timedRunBeepStop) {
             if (experiment.audioOutput == null) {
                 if (audioOutput == null) {
@@ -1672,6 +1704,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
             boolean relative = false;
 
             public void onTick(long muf) {
+                Log.e("123456", "77777777777");
                 //On each tick update the menu to show the remaining time
                 if (timedRunBeepCountdown || timedRunBeepStart) {
                     if (nextBeep < 0)

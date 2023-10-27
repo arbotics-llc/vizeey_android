@@ -1,5 +1,6 @@
 package de.rwth_aachen.vizzey.Bluetooth;
 
+import android.Manifest;
 import android.app.Activity;
 import android.app.Dialog;
 import android.app.ProgressDialog;
@@ -18,6 +19,7 @@ import android.content.pm.PackageManager;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Handler;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.TextView;
@@ -27,6 +29,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.view.ContextThemeWrapper;
+import androidx.core.app.ActivityCompat;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -71,6 +74,7 @@ public class Bluetooth implements Serializable {
     public UUID uuidFilter;
     public Boolean autoConnect;
     public int requestMTU;
+    public  static Context aa;
 
     /**
      * holds data to all characteristics to add or configure once the device is connected
@@ -157,6 +161,23 @@ public class Bluetooth implements Serializable {
      */
     public static Vector<BluetoothDevice> getPairedDevices() {
         Vector<BluetoothDevice> result = new Vector<>();
+        if (ActivityCompat.checkSelfPermission(aa, Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
+            // TODO: Consider calling
+            //    ActivityCompat#requestPermissions
+            // here to request the missing permissions, and then overriding
+            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+            //                                          int[] grantResults)
+            // to handle the case where the user grants the permission. See the documentation
+            // for ActivityCompat#requestPermissions for more details.
+            for (BluetoothDevice b : btAdapter.getBondedDevices()) {
+                int type = b.getType();
+                if (type == BluetoothDevice.DEVICE_TYPE_DUAL || type == BluetoothDevice.DEVICE_TYPE_LE) { // only devices with Bluetooth LE
+                    result.add(b);
+                }
+            }
+
+            return result;
+        }
         for (BluetoothDevice b : btAdapter.getBondedDevices()) {
             int type = b.getType();
             if (type == BluetoothDevice.DEVICE_TYPE_DUAL || type == BluetoothDevice.DEVICE_TYPE_LE) { // only devices with Bluetooth LE
@@ -165,6 +186,7 @@ public class Bluetooth implements Serializable {
         }
         return result;
     }
+
 
     /**
      * Create a new Bluetooth object.
@@ -246,7 +268,7 @@ public class Bluetooth implements Serializable {
      *
      * @throws BluetoothException if Bluetooth is disabled or if the device could not be found
      */
-    public void findDevice(Map<String,BluetoothDevice> knownDevices) throws BluetoothException {
+    public void findDevice(Map<String, BluetoothDevice> knownDevices) throws BluetoothException {
         if (!isEnabled()) {
             throw new BluetoothException(context.getResources().getString(R.string.bt_exception_disabled), this);
         }
@@ -257,20 +279,43 @@ public class Bluetooth implements Serializable {
             return;
         }
 
+
+        aa = activity;
         // First check paired devices - those get precedence
-        for (BluetoothDevice d : getPairedDevices()) {
-            if (!deviceName.isEmpty() && (deviceAddress == null || deviceAddress.isEmpty())) {
-                if (d.getName().contains(deviceName)) {
-                    btDevice = d;
-                    break;
-                }
-            } else {
-                if (d.getAddress().equals(deviceAddress)) {
-                    btDevice = d;
-                    break;
+        // for if condition getPairedDevices() not null
+        if (getPairedDevices() != null && getPairedDevices().size() != 0){
+            Log.e("12345678", "deviceName   "+deviceName);
+            for (BluetoothDevice d : getPairedDevices()) {
+                Log.e("12345678",  "getName     "+ d.getName());
+                if (!deviceName.isEmpty() && (deviceAddress == null || deviceAddress.isEmpty())) {
+                    if (ActivityCompat.checkSelfPermission(activity, Manifest.permission.BLUETOOTH_CONNECT)
+                            != PackageManager.PERMISSION_GRANTED) {
+
+                        // here to request the missing permissions, and then overriding
+                        //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+                        //                                          int[] grantResults)
+                        // to handle the case where the user grants the permission. See the documentation
+                        // for ActivityCompat#requestPermissions for more details..
+
+
+                        if (d.getName().contains(deviceName)) {
+                            btDevice = d;
+                            break;
+                        }
+
+                    }
+                    if (d.getName().contains(deviceName)) {
+                        btDevice = d;
+                        break;
+                    }
+                } else {
+                    if (d.getAddress().equals(deviceAddress)) {
+                        btDevice = d;
+                        break;
+                    }
                 }
             }
-        }
+    }
         if (btDevice == null && deviceAddress != null && !deviceAddress.isEmpty()) {
             btDevice = btAdapter.getRemoteDevice(deviceAddress);
         }
@@ -286,6 +331,7 @@ public class Bluetooth implements Serializable {
             if (bdi != null)
                 btDevice = bdi.device;
         }
+
         if (btDevice == null) {
             //still null? Give up and complain
             throw new BluetoothException(context.getResources().getString(R.string.bt_exception_notfound), this);
@@ -309,6 +355,7 @@ public class Bluetooth implements Serializable {
             throw new BluetoothException(context.getResources().getString(R.string.bt_exception_disabled), this);
         }
         boolean result = false;
+
 
         cdl = new CancellableLatch(1);
         btGatt = btDevice.connectGatt(context, false, btLeGattCallback);
@@ -373,6 +420,8 @@ public class Bluetooth implements Serializable {
      * @throws BluetoothException if the device is not connected
      */
     public void start() throws BluetoothException {
+
+        Log.e("123456", "Exception Exception Exception");
         if (!isConnected()) {
             throw new BluetoothException(context.getResources().getString(R.string.bt_exception_no_connection), this);
         }
@@ -1339,12 +1388,14 @@ public class Bluetooth implements Serializable {
          */
         @Override
         protected String doInBackground(Void... params) {
+            clear(); // clear command queue because there could be remains from the previous attempt3
+
             try {
-                clear(); // clear command queue because there could be remains from the previous attempt
                 connect(null);
-            } catch (Bluetooth.BluetoothException e) {
-                return e.getMessage();
+            } catch (BluetoothException e) {
+                throw new RuntimeException(e);
             }
+
             return null; // no error message
         }
 

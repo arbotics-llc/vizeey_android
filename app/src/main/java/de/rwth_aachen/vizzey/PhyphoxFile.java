@@ -97,6 +97,7 @@ public abstract class PhyphoxFile {
     //Helper function to read an input stream into memory and return an input stream to the data in memory as well as the data
     public static void remoteInputToMemory(PhyphoxStream stream) throws IOException {
         ByteArrayOutputStream os = new ByteArrayOutputStream();
+        Log.e("TAG", "remoteInputToMemory.url.....url....");
 
         CRC32 crc32 = new CRC32();
 
@@ -117,6 +118,7 @@ public abstract class PhyphoxFile {
     public static PhyphoxStream openXMLInputStream(Intent intent, Activity parent) {
         languageRating = 0;//If we find a locale, it replaces previous translations as long as it has a higher rating than the previous one.
         translation = new HashMap<>();
+        Log.e("TAG", "phyphoxStream.openXMLInputStream:....1111....");
 
         PhyphoxStream phyphoxStream = new PhyphoxStream();
 
@@ -157,27 +159,42 @@ public abstract class PhyphoxFile {
                 return phyphoxStream;
 
             } else if (scheme.equals(ContentResolver.SCHEME_FILE)) {//The intent refers to a file
+
+                Log.e("TAG", "phyphoxStream.errorMessage:....1111...."+scheme);
+
                 phyphoxStream.isLocal = false;
                 Uri uri = intent.getData();
+                Log.e("TAG", "uri....1111...."+uri);
+
                 if (uri == null) {
                     phyphoxStream.errorMessage = "Missing uri.";
                     return phyphoxStream;
                 }
                 ContentResolver resolver = parent.getContentResolver();
                 //We will need read permissions for pretty much any file...
-                if (!uri.getPath().startsWith(parent.getFilesDir().getPath()) && ContextCompat.checkSelfPermission(parent, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+                Log.e("TAG", "uri....uri.getPath()...."+uri.getPath());
+                Log.e("TAG", "uri...getFilesDir......111...."+uri.getPath().startsWith(parent.getFilesDir().getPath()));
+
+                if (!uri.getPath().startsWith(parent.getFilesDir().getPath()) && ContextCompat.checkSelfPermission(parent, Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                        != PackageManager.PERMISSION_GRANTED) {
                     //Android 6.0: No permission? Request it!
-                    ActivityCompat.requestPermissions(parent, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, 0);
+                    ActivityCompat.requestPermissions(parent, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, 0);
                     //We will stop with a no permission error. If the user grants the permission, the permission callback will restart the action with the same intent
                     phyphoxStream.errorMessage = "Permission needed to read external storage.";
                     return phyphoxStream;
                 }
                 try {
+                    Log.e("TAG", "uri...try.yyyyy."+uri.getPath().startsWith(parent.getFilesDir().getPath()));
+
                     phyphoxStream.inputStream = resolver.openInputStream(uri);
                     remoteInputToMemory(phyphoxStream);
                 } catch (Exception e) {
+                    Log.e("TAG", "uri...e.getMessage()..."+e.getMessage());
+
                     phyphoxStream.errorMessage = "Error loading experiment from file: " + e.getMessage();
                 }
+                Log.e("TAG", "phyphoxStream......."+phyphoxStream);
+
                 return phyphoxStream;
 
             } else if (scheme.equals(ContentResolver.SCHEME_CONTENT)) {//The intent refers to a content (like the attachment from a mailing app)
@@ -196,6 +213,9 @@ public abstract class PhyphoxFile {
                 Uri uri = intent.getData();
                 try {
                     URL url = new URL("https", uri.getHost(), uri.getPort(), uri.getPath() + (uri.getQuery() != null ? ("?" + uri.getQuery()) : ""));
+                    Log.e("TAG", "tfiles.url.....url...."+url);
+
+
                     phyphoxStream.inputStream = url.openStream();
                     remoteInputToMemory(phyphoxStream);
                 } catch (Exception e) {
@@ -4204,6 +4224,12 @@ public abstract class PhyphoxFile {
         @Override
         //Call the parent callback when we are done.
         protected void onPostExecute(PhyphoxExperiment experiment) {
+
+            Log.e("123456", "experiment    "+ experiment.title);
+            Log.e("123456", "experiment    "+ experiment.baseCategory);
+            Log.e("123456", "experiment    "+ experiment.category);
+            Log.e("123456", "experiment    "+ experiment.isLocal);
+            Log.e("123456", "experiment    "+ experiment.timedRun);
             parent.get().onExperimentLoaded(experiment);
         }
     }
